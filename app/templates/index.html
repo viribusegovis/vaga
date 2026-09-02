@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Vaga — {{ counts.all }} jobs{% endblock %}
+
+{% block body %}
+
+<div id="update" class="banner info" hidden style="cursor:pointer"
+     onclick="location.reload()"><strong id="update-text"></strong>
+  <span class="muted"> — click to refresh. Nothing moves until you do.</span></div>
+
+{% if run.state == 'running' %}
+  <div class="banner info">
+    <span class="spin" style="border-color:var(--line-2);border-top-color:var(--accent)"></span>
+    <strong>Searching…</strong> <span id="step" class="muted">{{ run.step }}</span>
+    <span class="muted"> — results appear as they arrive; this page won't jump.</span>
+  </div>
+{% elif run.output %}
+  <div class="banner {{ 'err' if run.failed else 'ok' }}">
+    <strong>{{ 'Run failed' if run.failed else 'Last run' }}</strong>
+    <pre>{{ run.output }}</pre>
+  </div>
+{% endif %}
+
+{% if flash %}<div class="banner {{ flash_kind|default('ok') }}">{{ flash }}</div>{% endif %}
+
+<div class="toolbar">
+  <div class="pills">
+    {% for s, label in [('all','All'), ('new','New'), ('interested','Interested'),
+                        ('applied','Applied'), ('dismissed','Dismissed')] %}
+      <a href="{{ url(status=s) }}" class="{{ 'on' if status == s }}">
+        {{ label }} <span class="n">{{ counts.get(s, 0) }}</span></a>
+    {% endfor %}
+  </div>
+
+  <span class="grow"></span>
+
+  <select onchange="location = this.value">
+    {% for v, label in [('score','Best match'), ('date','Newest'), ('company','Company')] %}
+      <option value="{{ url(sort=v) }}" {{ 'selected' if sort == v }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+
+  <select onchange="location = this.value">
+    {% for v, label in [('','Any location'), ('remote','Remote only'),
+                        ('hybrid','Hybrid'), ('reachable','Commutable only')] %}
+      <option value="{{ url(mode=v) }}" {{ 'selected' if mode == v }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+
+  <form action="/enrich" method="post">
+    <button class="btn btn-ghost" {% if run.state == 'running' %}disabled{% endif %}
+            title="Re-read every cached description with the local model">
+      Re-read descriptions</button>
+  </form>
+</div>
+
+{% if q %}
+  <p class="muted" style="margin:-4px 0 14px">
+    {{ jobs|length }} match “{{ q }}” · <a href="{{ url(q='') }}">clear</a></p>
+{% endif %}
+
+{% for j in jobs %}
+  {% set llm = j.llm or {} %}
+  <article class="card job {{ tier(j.score) }} {{ 'is-dismissed' if j.status == 'dismissed' }}">
+    <div class="job-head">
+      {% if j.logo %}
+        <img class="logo" src="/logo/{{ j.id }}" alt="" loading="lazy"
+             onerror="this.replaceWith(Object.assign(document.createElement('div'),
+                      {className:'logo-fb', textContent:'{{ (j.company or '?')[0]|upper }}'}))">
+      {% else %}
+        <div class="logo-fb">{{ (j.company or '?')[0]|upper }}</div>
+      {% endif %}
+
+      <div style="min-width:0">
+        <h2><a href="/job/{{ j.id }}?back={{ back|urlencode }}">{{ j.title }}</a></h2>
+        <div class="sub">
+          <b>{{ j.company }}</b>
+          {% if j.location %}<span class="dot">·</span>{{ j.location }}{% endif %}
+          {% if j.age_days is not none %}
+            <span class="dot">·</span>{{ 'today' if j.age_days == 0 else j.age_days ~ 'd ago' }}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="score" title="{{ j.score }} out of 100">{{ j.score }}</div>
+    </div>
+
+    {% if llm.summary %}<p class="summary">{{ llm.summary }}</p>{% endif %}
+
+    <div class="chips">
+      {% if j.status != 'new' %}
+        <span class="chip status-{{ j.status }}">{{ j.status }}</span>
+      {% endif %}
+
+      {% if j.mode == 'remote' %}<span class="chip ok">Remote</span>
+      {% elif j.mode == 'hybrid' %}
+        <span class="chip">Hybrid{% if llm.onsite_days_per_week %}
+          · {{ llm.onsite_days_per_week }} day{{ 's' if llm.onsite_days_per_week != 1 }} in office{% endif %}</span>
+      {% elif j.mode == 'onsite' %}<span class="chip warn">On-site</span>
+      {% else %}<span class="chip faint">Mode unstated</span>{% endif %}
+
+      {% if j.commute is not none %}
+        <span class="chip {{ 'ok' if j.commute >= 0.8 else ('warn' if j.commute >= 0.5 else 'bad') }}"
+              title="1.00 is free, 0.00 is impossible">Commute {{ '%.2f'|format(j.commute) }}</span>
+      {% endif %}
+
+      {% if llm.years_required %}
+        <span class="chip {{ 'warn' if llm.years_are_hard_requirement else '' }}">
+          {{ llm.years_required }}+ yrs{{ ' required' if llm.years_are_hard_requirement else ' preferred' }}</span>
+      {% endif %}
+
+      {% if llm.junior_suitable is defined and not llm.junior_suitable %}
+        <span class="chip bad">Not junior</span>
+      {% endif %}
+
+      {% if llm.salary %}<span class="chip ok">{{ llm.salary }}</span>{% endif %}
+      {% if j.employment_type %}<span class="chip">{{ j.employment_type }}</span>{% endif %}
+      {% if j.seniority and j.seniority != 'Not Applicable' %}
+        <span class="chip">{{ j.seniority }}</span>{% endif %}
+      {% for lang in llm.languages_required or [] %}
+        <span class="chip">{{ lang }}</span>{% endfor %}
+      {% if j.id in started %}<span class="chip ok">CV tailored</span>{% endif %}
+      {% if j.description and not j.llm %}
+        <span class="chip warn" title="Scored on keywords only">Not read by model</span>
+      {% endif %}
+    </div>
+
+    <details class="disc">
+      <summary>Match breakdown</summary>
+      <ul class="why">{% for r in j.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+    </details>
+
+    {% if j.description_html or j.description %}
+      <details class="disc">
+        <summary>Full description</summary>
+        <div class="desc">
+          {% if j.description_html %}{{ j.description_html|safe }}
+          {% else %}<p>{{ j.description }}</p>{% endif %}
+        </div>
+      </details>
+    {% endif %}
+
+    <div class="job-foot">
+      {% for s, label in [('interested','Interested'), ('applied','Applied'),
+                          ('dismissed','Dismiss'), ('new','Reset')] %}
+        {% if s != j.status %}
+          <form action="/mark/{{ j.id }}" method="post">
+            <input type="hidden" name="status" value="{{ s }}">
+            <input type="hidden" name="back" value="{{ back }}">
+            <button class="btn btn-ghost btn-sm">{{ label }}</button>
+          </form>
+        {% endif %}
+      {% endfor %}
+
+      <form action="/note/{{ j.id }}" method="post" style="flex:1; display:flex; gap:7px">
+        <input type="hidden" name="back" value="{{ back }}">
+        <input class="note-in" type="text" name="note" value="{{ j.note or '' }}"
+               placeholder="Add a note…">
+        <button class="btn btn-ghost btn-sm">Save</button>
+      </form>
+
+      <a class="btn {{ 'btn-ghost' if j.id not in started }} btn-sm"
+         href="/job/{{ j.id }}?back={{ back|urlencode }}#tailor"
+         title="{{ 'Open the tailored CV for this posting' if j.id in started
+                   else 'Tailor your CV to this posting' }}">
+        {{ 'Edit CV & cover ›' if j.id in started else 'Tailor CV ›' }}</a>
+    </div>
+  </article>
+{% else %}
+  <div class="empty">
+    <h2>Nothing here yet</h2>
+    <p>{% if q or status != 'all' %}No jobs match this filter.
+         <a href="/">Show everything</a>.
+       {% else %}Hit <strong>Fetch new</strong> to search LinkedIn, or widen your
+         searches in <a href="/settings">Preferences</a>.{% endif %}</p>
+  </div>
+{% endfor %}
+
+{% if rejected and status == 'all' and not q %}
+  <details class="card sec" style="padding:14px 18px">
+    <summary style="cursor:pointer; font-weight:600; font-size:14px">
+      {{ rejected|length }} filtered out by your hard rules</summary>
+    <ul class="why" style="margin-top:10px">
+      {% for t, c, r in rejected %}
+        <li><strong>{{ t }}</strong> — {{ c }} <span class="faint">· {{ r }}</span></li>
+      {% endfor %}
+    </ul>
+  </details>
+{% endif %}
+
+<script>
+(function () {
+  // Watch for background runs finishing. A finished run does NOT reorder the
+  // list underneath you — it raises a banner and waits for you to take it.
+  var seq = {{ seq }};
+  var banner = document.getElementById('update');
+  var text = document.getElementById('update-text');
+  var step = document.getElementById('step');
+  var wasRunning = {{ 'true' if run.state == 'running' else 'false' }};
+
+  function poll() {
+    fetch('/status').then(function (r) { return r.json(); }).then(function (s) {
+      if (step && s.step) { step.textContent = s.step; }
+      if (s.seq !== seq) {
+        // Something landed since this page rendered.
+        text.textContent = 'New jobs have been fetched';
+        banner.hidden = false;
+      } else if (wasRunning && s.state === 'idle') {
+        location.reload();          // the run we were already watching finished
+      }
+      setTimeout(poll, s.state === 'running' ? 2000 : 15000);
+    }).catch(function () { setTimeout(poll, 30000); });
+  }
+  setTimeout(poll, wasRunning ? 2000 : 15000);
+})();
+</script>
+
+{% endblock %}

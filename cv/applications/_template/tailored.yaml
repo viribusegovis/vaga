@@ -1,0 +1,50 @@
+# Every knob, with nothing personal in it. Copy this folder to start an
+# application by hand — or let the app seed one for you from a job page.
+#
+# tailored.yaml overlays master.yaml. Per section:
+#
+#   omit it entirely           -> master's content, in master's order
+#   [id, id, id]               -> those entries, in that order
+#   - {id: x, bullets: [...]}  -> that master entry, with fields overridden
+#   - {role: ..., org: ...}    -> a brand-new entry, not in master
+#
+# master.yaml is never edited to fit one job. Reusable new material goes into
+# master first, then gets selected from here.
+
+profile:
+  title: Junior Backend Developer        # retitled for this posting
+
+about: [opener, philosophy]              # pick and reorder master's paragraphs
+
+# Two accepted forms:
+#   skills: [A, B, C]                        -> the SKILLS block only
+#   skills: {skills: [...], familiar: [...]} -> adds the dimmer FAMILIAR block
+# `familiar` only ever draws from master's `familiar` pool — things not used
+# yet — and never renders unless named here, so it cannot claim depth you would
+# have to defend in an interview.
+skills:
+  skills: [Python, PostgreSQL, REST APIs, Git]
+  familiar: [Docker]                     # posting asks for it; no hands-on yet
+
+experience:
+  - id: firstjob                         # promoted, and rewritten for this role
+    bullets:
+      - Lead with whatever this posting cares about most.
+      - Keep every claim defensible.
+  - secondjob                            # kept verbatim from master
+
+education: [bsc]
+projects: [sideproject]
+
+cover:
+  title: JUNIOR BACKEND DEVELOPER
+  # date: omitted -> today's date
+  body:
+    - >-
+      One paragraph on the specific reason you fit this posting.
+    - >-
+      One on what you have actually shipped, naming the technology.
+    - >-
+      One naming a gap honestly, and what you would do about it.
+    - >-
+      I'd welcome the chance to talk about the role.

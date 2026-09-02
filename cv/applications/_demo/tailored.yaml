@@ -1,0 +1,164 @@
+# Fully fictional CV + cover, for screenshots and README images.
+#
+# Nothing here is inherited from master.yaml — every section is overridden,
+# including `languages` and the cover's greeting. Names, dates, employers,
+# schools, projects and prose are all invented. Company names are Microsoft's
+# standard fictional placeholders. Text lengths mirror a real CV so screenshots
+# show honest line wrapping and density.
+#
+#   python render.py applications/_demo
+
+profile:
+  name: Alex Example
+  title: Junior Fullstack Developer
+  phone: "+351 900 000 000"
+  email: alex@example.com
+  location: Lisbon, Portugal
+  github: github.com/alexexample
+  linkedin: linkedin.com/in/alexexample
+  photo: assets/avatar-placeholder.png
+
+languages:
+  - {name: English, level: Native, dots: 5}
+  - {name: Spanish, level: Professional, dots: 4}
+  - {name: German, level: Basic, dots: 2}
+
+about:
+  - text: >-
+      Software engineering graduate looking for a first full-time role on a
+      backend or platform team.
+  - text: >-
+      Around three years of combined part-time and internship work, mostly on
+      web services and the infrastructure around them.
+  - text: >-
+      Recent work includes an internal reporting service handling a few million
+      rows a day, and a scheduling tool that replaced a spreadsheet used across
+      four teams.
+  - text: >-
+      I prefer boring, well-tested solutions over clever ones, and I'd rather
+      understand a system end to end than move fast through the parts I know.
+
+skills:
+  skills:
+    - Typescript
+    - C#
+    - .NET
+    - ASP.NET Core
+    - React
+    - Angular
+    - Entity Framework Core
+    - REST APIs
+    - PostgreSQL
+    - Azure
+    - Terraform
+    - CI/CD
+    - Github Actions
+    - Unit Testing
+    - Git
+  familiar:
+    - Docker
+    - Kubernetes
+    - AWS
+
+experience:
+  - role: (Part-time) Junior Backend Developer
+    org: Northwind Labs
+    dates: 03/2024 - 11/2025
+    location: Remote, Netherlands
+    bullets:
+      - Built and maintained the reporting API behind the customer dashboard.
+      - Designed the Postgres schema and the aggregation queries it runs on.
+      - Added token-based auth and per-tenant access rules across the service.
+      - Cut the nightly export job from roughly 40 minutes to under 6.
+    tech: TypeScript, Node.js, PostgreSQL, REST APIs, Docker Compose
+
+  - role: Software Engineering Intern
+    org: Contoso Digital
+    dates: 09/2022 - 06/2023
+    location: Porto, Portugal
+    bullets:
+      - Curricular internship with the platform team on an internal tooling suite.
+      - Built the C# service layer and the Angular frontend for the audit module.
+      - Provisioned staging infrastructure with Terraform and wrote the CI pipeline.
+    tech: Angular, TypeScript, C#, Azure, Terraform
+
+  - role: Junior Developer (Placement)
+    org: Fabrikam Systems
+    dates: 02/2021 - 07/2021
+    location: Coimbra, Portugal
+    bullets:
+      - >-
+        Worked in a team of four on an inventory tracking tool for the warehouse
+        floor, building the web frontend and the reporting views.
+      - Migrated a legacy reporting screen off a deprecated charting library.
+    tech: PHP, Laravel, MySQL, jQuery
+
+education:
+  - degree: Bachelor's Degree in Software Engineering
+    org: Example Institute of Technology
+    dates: 09/2021 - 06/2025
+    location: Lisbon, Portugal
+  - degree: Professional Diploma in Applied Computing
+    org: Example Institute of Technology
+    dates: 09/2019 - 06/2021
+    location: Lisbon, Portugal
+
+projects:
+  - name: Ledgerline – Self-Hosted Expense Tracker
+    subtitle: Personal Project
+    link: ledgerline.example.com
+    dates: 01/2026 - 04/2026
+    location: ""
+    bullets:
+      - >-
+        Built a self-hosted expense tracker that imports bank statements, matches
+        recurring charges, and flags anything that deviates from its usual amount
+        or schedule.
+      - >-
+        Kept the matching engine as a pure module with no database access, which
+        made the whole rules layer testable from fixtures rather than a seeded
+        database.
+      - >-
+        Set up the deployment side properly: migrations run on boot, secrets come
+        from the environment, and a single compose file brings the stack up.
+    tech: TypeScript, Fastify, PostgreSQL, Vitest, GitHub Actions.
+
+  - name: Meeting Room Booking System
+    subtitle: Final-Year Project – Example Institute of Technology
+    link: ""
+    dates: 10/2024 - 05/2025
+    location: Lisbon, Portugal
+    bullets:
+      - >-
+        Final-year project replacing a shared spreadsheet used to book meeting
+        rooms across a four-building campus.
+      - >-
+        Built the booking service, a conflict-detection layer for overlapping
+        reservations, and an admin view for usage reporting.
+      - >-
+        Integrated the organisation's single sign-on for role-based access, and
+        added a display panel showing each room's schedule.
+    tech: >-
+      ASP.NET Core, React, C#, TypeScript, Entity Framework Core, REST APIs,
+      SignalR, Azure.
+
+cover:
+  title: BACKEND SOFTWARE ENGINEER
+  date: 27 AUGUST 2026
+  greeting: "Hello,"
+  body:
+    - >-
+      I'm writing about the backend engineer role. My internship was C# and
+      Azure work with a platform team, and my final-year project was an ASP.NET
+      Core service with Entity Framework Core and organisational SSO.
+    - >-
+      This would be my first full-time role. What I'd point to instead is that
+      I've shipped and maintained things that other people depended on: the
+      reporting API at Northwind ran against a live customer dashboard, and I
+      owned its schema and its slowest job.
+    - >-
+      I haven't worked with Docker or Kubernetes in production — my deployment
+      experience is Azure with Terraform, and Compose locally. I'd rather say so
+      than imply otherwise.
+    - >-
+      I'd welcome the chance to talk about the role.

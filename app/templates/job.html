@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} — {{ job.company }}{% endblock %}
+
+{% block body %}
+{% set llm = job.llm or {} %}
+
+<p style="margin:0 0 14px"><a href="{{ back }}" class="muted"
+   style="text-decoration:none; font-size:13.5px">‹ Back to jobs</a></p>
+
+{% if flash %}<div class="banner {{ flash_kind|default('ok') }}">{{ flash }}</div>{% endif %}
+
+<!-- ------------------------------------------------------------- the posting -->
+<article class="card {{ tier(job.score) }}" style="padding:20px 22px; margin-bottom:16px">
+  <div style="display:flex; gap:16px; align-items:flex-start">
+    {% if job.logo %}
+      <img class="logo" style="width:56px;height:56px" src="/logo/{{ job.id }}" alt=""
+           onerror="this.replaceWith(Object.assign(document.createElement('div'),
+                    {className:'logo-fb', textContent:'{{ (job.company or '?')[0]|upper }}',
+                     style:'width:56px;height:56px'}))">
+    {% else %}
+      <div class="logo-fb" style="width:56px;height:56px">{{ (job.company or '?')[0]|upper }}</div>
+    {% endif %}
+    <div style="min-width:0; flex:1">
+      <h1 style="margin:0 0 3px; font-size:21px; font-weight:650; letter-spacing:-.02em">
+        {{ job.title }}</h1>
+      <div class="sub" style="font-size:14.5px">
+        <b>{{ job.company }}</b>
+        {% if job.location %}<span class="dot">·</span>{{ job.location }}{% endif %}
+        {% if job.age_days is not none %}
+          <span class="dot">·</span>posted {{ 'today' if job.age_days == 0 else job.age_days ~ ' days ago' }}
+        {% endif %}
+      </div>
+    </div>
+    <div class="score" style="width:56px;height:56px;font-size:21px">{{ job.score }}</div>
+  </div>
+
+  <div class="chips" style="margin-left:0; margin-right:0">
+    {% if job.status != 'new' %}<span class="chip status-{{ job.status }}">{{ job.status }}</span>{% endif %}
+    {% if job.mode == 'remote' %}<span class="chip ok">Remote</span>
+    {% elif job.mode == 'hybrid' %}<span class="chip">Hybrid{% if llm.onsite_days_per_week %}
+      · {{ llm.onsite_days_per_week }} day{{ 's' if llm.onsite_days_per_week != 1 }} in office{% endif %}</span>
+    {% elif job.mode == 'onsite' %}<span class="chip warn">On-site</span>
+    {% else %}<span class="chip">Mode unstated</span>{% endif %}
+    {% if job.commute is not none %}
+      <span class="chip {{ 'ok' if job.commute >= 0.8 else ('warn' if job.commute >= 0.5 else 'bad') }}">
+        Commute {{ '%.2f'|format(job.commute) }}</span>{% endif %}
+    {% if llm.years_required %}<span class="chip {{ 'warn' if llm.years_are_hard_requirement }}">
+      {{ llm.years_required }}+ yrs {{ 'required' if llm.years_are_hard_requirement else 'preferred' }}</span>{% endif %}
+    {% if llm.junior_suitable is defined and not llm.junior_suitable %}
+      <span class="chip bad">Not junior</span>{% endif %}
+    {% if llm.salary %}<span class="chip ok">{{ llm.salary }}</span>{% endif %}
+    {% if llm.contract_type and llm.contract_type != 'unclear' %}
+      <span class="chip">{{ llm.contract_type }}</span>{% endif %}
+    {% for lang in llm.languages_required or [] %}<span class="chip">{{ lang }}</span>{% endfor %}
+  </div>
+
+  {% if llm.summary %}<p class="summary" style="margin-left:0;margin-right:0">{{ llm.summary }}</p>{% endif %}
+
+  <div class="job-foot" style="margin:16px -22px -20px; border-radius:0">
+    <a class="btn" href="{{ job.url }}" target="_blank" rel="noopener">Open on LinkedIn ↗</a>
+    {% if job.company_url %}
+      <a class="btn btn-ghost" href="{{ job.company_url }}" target="_blank" rel="noopener">
+        {{ job.company }} ↗</a>
+    {% endif %}
+    {% for s, label in [('interested','Interested'), ('applied','Applied'),
+                        ('dismissed','Dismiss'), ('new','Reset')] %}
+      {% if s != job.status %}
+        <form action="/mark/{{ job.id }}" method="post">
+          <input type="hidden" name="status" value="{{ s }}">
+          <input type="hidden" name="back" value="/job/{{ job.id }}">
+          <button class="btn btn-ghost btn-sm">{{ label }}</button>
+        </form>
+      {% endif %}
+    {% endfor %}
+  </div>
+</article>
+
+<!-- ------------------------------------------------------ tailored application -->
+<section class="card sec" id="tailor">
+  <h2>Tailored CV &amp; cover letter</h2>
+
+  {% if not app %}
+    <p class="hint">Creates <code class="mono">cv/applications/{{ slug }}/</code> with a
+      starter <code class="mono">tailored.yaml</code>: the skills this posting names that your
+      master CV already claims, plus a cover skeleton. It selects, it never invents —
+      you write the argument.</p>
+    <form action="/job/{{ job.id }}/tailor" method="post">
+      <button class="btn">Create tailored application</button>
+    </form>
+
+  {% else %}
+    <p class="hint">
+      <code class="mono">applications/{{ slug }}/tailored.yaml</code>
+      {% if pdfs %}· last rendered {{ rendered_ago }}{% endif %}
+    </p>
+
+    {% if render_output %}
+      <div class="banner {{ 'ok' if render_ok else 'err' }}">
+        <strong>{{ 'Rendered' if render_ok else 'Render failed' }}</strong>
+        <pre>{{ render_output }}</pre>
+      </div>
+    {% endif %}
+
+    <form action="/job/{{ job.id }}/tailored" method="post">
+      <textarea name="text" rows="22" spellcheck="false">{{ tailored }}</textarea>
+      <div class="actions-bar">
+        <button class="btn btn-ghost">Save</button>
+        <button class="btn" formaction="/job/{{ job.id }}/render">Save &amp; render PDFs</button>
+        <span class="muted" style="font-size:13px">
+          Omit a section to fall back to your master CV. Invalid YAML is rejected, not written.</span>
+      </div>
+    </form>
+
+    {% if pdfs %}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr));
+                  gap:14px; margin-top:18px">
+        {% for f in pdfs %}
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px">
+              <strong style="font-size:14px">{{ 'Cover letter' if f.kind == 'cover' else 'CV' }}</strong>
+              <span class="faint" style="font-size:12.5px">{{ f.size_kb }} KB</span>
+              <span class="grow" style="flex:1"></span>
+              <a class="btn btn-ghost btn-sm"
+                 href="/job/{{ job.id }}/pdf/{{ f.kind }}?v={{ f.mtime|int }}"
+                 target="_blank" rel="noopener">Open ↗</a>
+            </div>
+            <iframe src="/job/{{ job.id }}/pdf/{{ f.kind }}?v={{ f.mtime|int }}#toolbar=0"
+                    title="{{ f.name }}" loading="lazy"
+                    style="width:100%; height:460px; border:1px solid var(--line);
+                           border-radius:var(--r-sm); background:var(--raised)"></iframe>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</section>
+
+<!-- ----------------------------------------------------------------- assistant -->
+<section class="card sec" id="ask">
+  <h2>Ask about this application</h2>
+  <p class="hint">Runs locally on <code class="mono">{{ chat_model }}</code>, grounded in this
+     posting plus your <code class="mono">master.yaml</code> and profile. It can only use
+     experience those files already claim — if the posting wants something you don't have,
+     it's told to say so rather than write around it.</p>
+
+  <p id="warmth" class="muted" style="font-size:13px; margin:-6px 0 12px"></p>
+
+  <div class="presets">
+    {% for label, prompt in presets %}
+      <button class="btn btn-ghost btn-sm preset" data-q="{{ prompt }}">{{ label }}</button>
+    {% endfor %}
+  </div>
+
+  <div id="thread" class="thread">
+    {% for m in chat %}
+      <div class="msg {{ m.role }}"><div class="who">{{ 'You' if m.role == 'user' else 'Vaga' }}</div>
+        <div class="text">{{ m.content }}</div></div>
+    {% endfor %}
+  </div>
+
+  {% if proposed %}
+    <form action="/job/{{ job.id }}/apply-yaml" method="post" class="proposal">
+      <div class="banner info" style="margin-bottom:0">
+        <strong>The assistant proposed a new tailored.yaml.</strong>
+        It's validated before anything is written, and you can edit it below first.
+      </div>
+      <textarea name="text" rows="14" spellcheck="false">{{ proposed }}</textarea>
+      <div class="actions-bar">
+        <button class="btn">Apply to tailored.yaml</button>
+        <span class="muted" style="font-size:13px">Overwrites the file; render again after.</span>
+      </div>
+    </form>
+  {% endif %}
+
+  <!-- onsubmit guard: if the script below ever fails to parse, the browser must
+       not fall back to a native submit — that reloads the page and silently
+       throws the question away, which looks like the app doing nothing. -->
+  <form id="askform" class="askbar" onsubmit="return false;">
+    <textarea id="q" rows="2" placeholder="Ask anything about this posting, or tell it what to write…"></textarea>
+    <div style="display:flex; flex-direction:column; gap:6px">
+      <button class="btn" id="send" type="submit">Ask</button>
+      {% if chat %}
+        <button class="btn btn-ghost btn-sm" type="button"
+                onclick="document.getElementById('clearform').submit()">Clear</button>
+      {% endif %}
+    </div>
+  </form>
+  <form id="clearform" action="/job/{{ job.id }}/chat/clear" method="post" hidden></form>
+</section>
+
+<style>
+  .presets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .thread { display:flex; flex-direction:column; gap:12px; }
+  .thread:empty { display:none; }
+  .msg .who { font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+              color:var(--faint); font-weight:600; margin-bottom:4px; }
+  .msg .text { white-space:pre-wrap; font-size:14px; line-height:1.6;
+               padding:11px 14px; border-radius:var(--r-sm); border:1px solid var(--line); }
+  .msg.user .text { background:color-mix(in srgb, var(--accent) 7%, var(--card)); }
+  .msg.assistant .text { background:var(--raised); }
+  .askbar { display:flex; gap:9px; margin-top:14px; align-items:stretch; }
+  .askbar textarea { flex:1; font-family:inherit; font-size:14px; resize:vertical; }
+  .proposal { margin-top:16px; }
+  .proposal textarea { margin-top:10px; }
+</style>
+
+<script>
+(function () {
+  // The system prompt is ~6k tokens of profile and posting; processing it takes
+  // minutes on this GPU, but Ollama caches the prefix. So push it through once
+  // as soon as the page opens — by the time a question is typed it is warm, and
+  // the first answer arrives in seconds instead of three minutes.
+  var warmth = document.getElementById('warmth');
+  var ready = false;
+  function say(t) { warmth.textContent = t; }
+
+  fetch('/job/{{ job.id }}/warm', { method: 'POST' })
+    .then(function (r) { return r.json(); })
+    .then(function (s) {
+      if (s.state === 'ready') { ready = true; return say('Ready.'); }
+      if (s.state === 'offline') { return say('Ollama is not running — the assistant is unavailable.'); }
+      if (s.state === 'busy') { return say('A search is running; the assistant will be slow until it finishes.'); }
+      say('Warming up on this posting… the first answer is much faster once this finishes.');
+      (function poll() {
+        setTimeout(function () {
+          fetch('/job/{{ job.id }}/warm').then(function (r) { return r.json(); })
+            .then(function (s) {
+              if (s.state === 'ready') { ready = true; say('Ready.'); } else { poll(); }
+            }).catch(poll);
+        }, 4000);
+      })();
+    })
+    .catch(function () { say(''); });
+
+  var form = document.getElementById('askform');
+  var box  = document.getElementById('q');
+  var send = document.getElementById('send');
+  var thread = document.getElementById('thread');
+
+  function bubble(role, text) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg ' + role;
+    var who = document.createElement('div');
+    who.className = 'who';
+    who.textContent = role === 'user' ? 'You' : 'Vaga';
+    var body = document.createElement('div');
+    body.className = 'text';
+    body.textContent = text;
+    wrap.appendChild(who); wrap.appendChild(body);
+    thread.appendChild(wrap);
+    return body;
+  }
+
+  document.querySelectorAll('.preset').forEach(function (b) {
+    b.addEventListener('click', function () {
+      box.value = b.dataset.q;
+      form.requestSubmit();
+    });
+  });
+
+  box.addEventListener('keydown', function (e) {
+    // Enter sends, Shift+Enter makes a newline.
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+  });
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var q = box.value.trim();
+    if (!q || send.disabled) return;
+    box.value = '';
+    send.disabled = true;
+    send.textContent = ready ? 'Thinking…' : 'Warming up…';
+    bubble('user', q);
+    var out = bubble('assistant', '');
+    out.scrollIntoView({ block: 'end' });
+
+    try {
+      var res = await fetch('/job/{{ job.id }}/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: q })
+      });
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        out.textContent = err.error || ('the model is unreachable (HTTP ' + res.status + ')');
+      } else {
+        var reader = res.body.getReader();
+        var dec = new TextDecoder();
+        while (true) {
+          var chunk = await reader.read();
+          if (chunk.done) break;
+          out.textContent += dec.decode(chunk.value, { stream: true });
+          out.scrollIntoView({ block: 'end' });
+        }
+      }
+    } catch (ex) {
+      out.textContent += '\n\n[connection lost: ' + ex.message + ']';
+    }
+
+    send.disabled = false;
+    send.textContent = 'Ask';
+    // Reload so a proposed tailored.yaml surfaces its Apply button.
+    if (out.textContent.indexOf('```yaml') !== -1 || out.textContent.indexOf('```yml') !== -1) {
+      location.reload();
+    }
+  });
+})();
+</script>
+
+<!-- ------------------------------------------------------------------- scoring -->
+<section class="card sec">
+  <h2>Match breakdown</h2>
+  <ul class="why" style="margin-top:4px">
+    {% for r in job.reasons %}<li>{{ r }}</li>{% endfor %}
+  </ul>
+  <div class="row" style="margin-top:12px">
+    <label>Your note on this job</label>
+  </div>
+  <form action="/note/{{ job.id }}" method="post" style="display:flex; gap:8px">
+    <input type="hidden" name="back" value="/job/{{ job.id }}">
+    <input class="note-in" style="flex:1" type="text" name="note"
+           value="{{ job.note or '' }}" placeholder="Contacts, deadlines, what to follow up…">
+    <button class="btn btn-ghost">Save note</button>
+  </form>
+</section>
+
+<!-- ---------------------------------------------------------------- the details -->
+<section class="card sec">
+  <h2>Posting details</h2>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
+    {% for label, value in details %}
+      <div class="row" style="border:0; padding:5px 0; display:block">
+        <div class="faint" style="font-size:11px; text-transform:uppercase; letter-spacing:.05em">
+          {{ label }}</div>
+        <div style="font-size:13.5px">{{ value }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if job.description_html or job.description %}
+<section class="card sec">
+  <h2>Full description</h2>
+  <div class="desc" style="max-height:none">
+    {% if job.description_html %}{{ job.description_html|safe }}
+    {% else %}<p>{{ job.description }}</p>{% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

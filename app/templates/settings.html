@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block title %}Vaga — Preferences{% endblock %}
+
+{% block body %}
+
+{% if flash %}<div class="banner {{ flash_kind|default('ok') }}">{{ flash }}</div>{% endif %}
+
+<!-- ------------------------------------------------------------ searches -->
+<form class="card sec" action="/settings/searches" method="post">
+  <h2>Saved searches</h2>
+  <p class="hint">What gets pulled from LinkedIn. Each row is one query; about 10
+     results per page. <strong>*</strong> LinkedIn's public endpoint ignores the
+     Level and Work type filters — they're sent anyway in case that changes, but
+     seniority and work mode are decided by your rules below, not by the search.</p>
+
+  <table class="searches">
+    <thead>
+      <tr><th style="width:15%">Name</th><th style="width:24%">Keywords</th>
+          <th style="width:16%">Location</th><th>Posted</th>
+          <th title="LinkedIn's guest endpoint ignores this filter">Level*</th>
+          <th title="LinkedIn's guest endpoint ignores this filter">Work type*</th>
+          <th>Pages</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for s in searches %}
+      <tr>
+        <td><input type="text" name="id" value="{{ s.id }}"></td>
+        <td><input type="text" name="keywords" value="{{ s.keywords }}"></td>
+        <td><input type="text" name="location" value="{{ s.location }}"></td>
+        <td>
+          <select name="posted_within">
+            {% for v in ['24h','7d','30d','any'] %}
+              <option {{ 'selected' if s.posted_within|string == v }}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select name="experience">
+            {% for v, l in [('entry,associate','Entry+Assoc'), ('internship,entry','Intern+Entry'),
+                            ('entry','Entry'), ('associate','Associate'),
+                            ('internship,entry,associate','All junior')] %}
+              <option value="{{ v }}" {{ 'selected' if (s.experience or [])|join(',') == v }}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select name="work_type">
+            {% for v, l in [('remote,hybrid,onsite','Any'), ('remote','Remote'),
+                            ('remote,hybrid','Remote+Hybrid'), ('hybrid','Hybrid')] %}
+              <option value="{{ v }}" {{ 'selected' if (s.work_type or [])|join(',') == v }}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="number" name="pages" value="{{ s.pages or 2 }}" min="1" max="10"></td>
+        <td><label class="muted" style="font-size:12px">
+          <input type="checkbox" name="drop" value="{{ loop.index0 }}"> drop</label></td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td><input type="text" name="id" placeholder="new-search"></td>
+        <td><input type="text" name="keywords" placeholder="e.g. backend developer"></td>
+        <td><input type="text" name="location" placeholder="Country or city"></td>
+        <td><select name="posted_within">
+          {% for v in ['24h','7d','30d','any'] %}<option {{ 'selected' if v=='7d' }}>{{ v }}</option>{% endfor %}
+        </select></td>
+        <td><select name="experience">
+          {% for v, l in [('entry,associate','Entry+Assoc'), ('internship,entry','Intern+Entry'),
+                          ('entry','Entry'), ('associate','Associate'),
+                          ('internship,entry,associate','All junior')] %}
+            <option value="{{ v }}">{{ l }}</option>{% endfor %}
+        </select></td>
+        <td><select name="work_type">
+          {% for v, l in [('remote,hybrid,onsite','Any'), ('remote','Remote'),
+                          ('remote,hybrid','Remote+Hybrid'), ('hybrid','Hybrid')] %}
+            <option value="{{ v }}">{{ l }}</option>{% endfor %}
+        </select></td>
+        <td><input type="number" name="pages" value="2" min="1" max="10"></td>
+        <td class="faint" style="font-size:12px">add</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="actions-bar"><button class="btn">Save searches</button>
+    <span class="muted" style="font-size:13px">Leave the last row's name blank to skip it.</span></div>
+</form>
+
+<!-- -------------------------------------------------------- deal-breakers -->
+<form class="card sec" action="/settings/filters" method="post">
+  <h2>Deal-breakers</h2>
+  <p class="hint">Jobs matching any of these are dropped before scoring, and listed
+     at the bottom of the jobs page so you can see what was cut.</p>
+
+  <div class="row">
+    <label>Most days in the office you'd accept
+      <small>Counting the commute you'd actually be willing to do.</small></label>
+    <input type="number" name="max_onsite_days" min="0" max="5" value="{{ reject.max_onsite_days }}">
+  </div>
+  <div class="row">
+    <label>Drop jobs demanding this many years or more
+      <small>Only when stated as a hard requirement, not "preferred".</small></label>
+    <input type="number" name="max_years" min="1" max="20" value="{{ reject.max_years }}">
+  </div>
+  <div class="row">
+    <label>Languages you speak
+      <small>A posting requiring anything else is dropped. Comma separated.</small></label>
+    <input type="text" name="languages_spoken" value="{{ reject.languages_spoken|join(', ') }}">
+  </div>
+  <div class="row">
+    <label>Never commute to (on-site only)
+      <small>Hybrid and remote roles in these cities are still kept.</small></label>
+    <input type="text" name="onsite_cities" value="{{ reject.onsite_cities|join(', ') }}">
+  </div>
+  <div class="row">
+    <label>Reject these words in a job title
+      <small>Matched whole-word, case-insensitive.</small></label>
+    <input type="text" name="title_terms" value="{{ reject.title_terms|join(', ') }}">
+  </div>
+  <div class="actions-bar"><button class="btn">Save deal-breakers</button></div>
+</form>
+
+<!-- --------------------------------------------------------------- scoring -->
+<form class="card sec" action="/settings/scoring" method="post">
+  <h2>What makes a good match</h2>
+  <p class="hint">Relative weights, normalised to a 0–100 score. Drag one up and the
+     others count for proportionally less.</p>
+
+  {% for key, label, hint in [
+      ('skills', 'Skills overlap', 'Terms from your CV, weighted core > working > familiar'),
+      ('seniority', 'Junior-friendliness', 'Junior wording lifts, "Mid-Senior level" subtracts'),
+      ('work_mode', 'Location & work mode', 'Remote beats hybrid beats on-site, scaled by commute'),
+      ('freshness', 'Freshly posted', 'Decays evenly over 30 days')] %}
+    <div class="row">
+      <label>{{ label }}<small>{{ hint }}</small></label>
+      <input type="range" name="w_{{ key }}" min="0" max="60" value="{{ weights[key] }}"
+             oninput="this.nextElementSibling.value = this.value">
+      <output>{{ weights[key] }}</output>
+    </div>
+  {% endfor %}
+
+  <div class="row">
+    <label>“Worth a look” cutoff
+      <small>Below this a job still shows, just without the highlight.</small></label>
+    <input type="range" name="interesting_at" min="0" max="100" value="{{ scoring.interesting_at }}"
+           oninput="this.nextElementSibling.value = this.value">
+    <output>{{ scoring.interesting_at }}</output>
+  </div>
+  <div class="row">
+    <label>Penalty for “Mid-Senior level”
+      <small>Subtracted from the junior score when LinkedIn labels it that.</small></label>
+    <input type="number" name="mid_senior_penalty" min="0" max="20"
+           value="{{ scoring.mid_senior_penalty }}">
+  </div>
+  <div class="actions-bar"><button class="btn">Save weights</button></div>
+</form>
+
+<!-- --------------------------------------------------------------- commute -->
+<form class="card sec" action="/settings/commute" method="post">
+  <h2>Commute</h2>
+  <p class="hint">How reachable each place is: 1.00 is free (or remote), 0.00 impossible.
+     Read left-to-right, so “City, Country” uses the city, not the country.</p>
+  <div class="grid2">
+    {% for city, factor in commute.items() %}
+      <div class="kv">
+        <input type="text" name="city" value="{{ city }}"
+               {{ 'readonly' if city == 'unknown_city' }}>
+        <input type="number" name="factor" value="{{ factor }}" step="0.05" min="0" max="1">
+      </div>
+    {% endfor %}
+    <div class="kv">
+      <input type="text" name="city" placeholder="Add a city…">
+      <input type="number" name="factor" placeholder="0.5" step="0.05" min="0" max="1">
+    </div>
+  </div>
+  <div class="actions-bar"><button class="btn">Save commute</button>
+    <span class="muted" style="font-size:13px">Blank a city's name to remove it.</span></div>
+</form>
+
+<!-- ------------------------------------------------------------------- llm -->
+<form class="card sec" action="/settings/llm" method="post">
+  <h2>Description reading</h2>
+  <p class="hint">A local model reads each posting and extracts facts — work mode,
+     office days, years required, languages. It never assigns the score itself.</p>
+
+  <div class="row">
+    <label>Read descriptions with a model
+      <small>Off means work mode and years fall back to keyword matching.</small></label>
+    <input type="checkbox" name="enabled" {{ 'checked' if llm.enabled }}>
+  </div>
+  <div class="row">
+    <label>Model
+      <small>
+        {% if ollama_models %}Installed: {{ ollama_models|join(', ') }}
+        {% else %}<span style="color:var(--bad)">Ollama isn't responding at {{ llm.host }}.</span>{% endif %}
+      </small></label>
+    {% if ollama_models %}
+      <select name="model">
+        {% for m in ollama_models %}
+          <option {{ 'selected' if m == llm.model }}>{{ m }}</option>{% endfor %}
+      </select>
+    {% else %}
+      <input type="text" name="model" value="{{ llm.model }}">
+    {% endif %}
+  </div>
+  <div class="row">
+    <label>Assistant model
+      <small>The chat on a job's page. Writing prose is harder than extracting facts,
+        so a bigger model helps more here — but it costs latency on the first question
+        of each posting (~3 min on 8B, ~1 min on 3B) before the prompt cache warms.</small></label>
+    {% if ollama_models %}
+      <select name="chat_model">
+        {% for m in ollama_models %}
+          <option {{ 'selected' if m == (llm.chat_model or llm.model) }}>{{ m }}</option>{% endfor %}
+      </select>
+    {% else %}
+      <input type="text" name="chat_model" value="{{ llm.chat_model or llm.model }}">
+    {% endif %}
+  </div>
+  <div class="row">
+    <label>Seconds between LinkedIn requests
+      <small>Lower is faster and likelier to get you rate-limited.</small></label>
+    <input type="number" name="delay" step="0.5" min="0.5" max="10" value="{{ fetch.delay }}">
+  </div>
+  <div class="row">
+    <label>Search again automatically, every
+      <small>Minutes. 0 turns it off. New postings never rearrange the page you're
+        reading — the jobs list offers a banner and you choose when to take it.</small></label>
+    <input type="number" name="auto_every_minutes" min="0" max="1440"
+           value="{{ fetch.auto_every_minutes or 0 }}">
+  </div>
+  <div class="row">
+    <label>Descriptions read at once
+      <small>Concurrent requests to the model. 3 is about 1.6x faster than 1 here.</small></label>
+    <input type="number" name="workers" min="1" max="8" value="{{ llm.workers or 3 }}">
+  </div>
+  <div class="row">
+    <label>Descriptions to fetch per run
+      <small>Caps how much a single run pulls from LinkedIn.</small></label>
+    <input type="number" name="max_details" min="1" max="300" value="{{ fetch.max_details }}">
+  </div>
+  <div class="actions-bar"><button class="btn">Save</button></div>
+</form>
+
+<!-- ------------------------------------------------------------------- raw -->
+<details class="card sec">
+  <summary style="cursor:pointer; font-weight:640; font-size:15px">Edit searches.yaml directly</summary>
+  <p class="hint" style="margin-top:8px">Everything above writes to this file, keeping your
+     comments. Anything the forms don't cover, change here. Saving validates first.</p>
+  <form action="/settings/raw" method="post">
+    <textarea name="text" rows="26" spellcheck="false">{{ raw_yaml }}</textarea>
+    <div class="actions-bar"><button class="btn">Save file</button>
+      <span class="muted" style="font-size:13px">Invalid YAML is rejected, not written.</span></div>
+  </form>
+</details>
+
+<!-- ------------------------------------------------------------------ data -->
+<div class="card sec">
+  <h2>Stored data</h2>
+  <p class="hint">{{ stats.total }} postings cached, {{ stats.enriched }} read by the model,
+     {{ stats.with_desc }} with a saved description. Statuses and notes live in
+     <code class="mono">jobs.json</code> and survive every run.</p>
+  <div class="actions-bar">
+    <form action="/settings/forget" method="post"
+          onsubmit="return confirm('Delete dismissed jobs from the cache? They can come back in a later search.')">
+      <button class="btn btn-ghost">Forget {{ stats.dismissed }} dismissed</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,168 @@
+# Copy to searches.yaml and edit. The real file is not tracked by git:
+# it carries where you live and what you would commute to.
+
+# Saved searches + the rules that judge what comes back.
+#
+#   python scout.py            run every search
+#   python scout.py --only pt-junior-fullstack
+#
+# NOTE: of LinkedIn's guest filters, only `posted_within` actually works.
+# `experience` and `work_type` are sent but ignored by the endpoint — entry and
+# executive return identical results, and so do remote and onsite. Seniority and
+# work mode are decided by the rules below, not by the search.
+#   python scout.py --all      include jobs already seen on a previous run
+
+searches:
+  - id: example
+    keywords: '("software engineer" OR "web developer") NOT (senior OR lead)'
+    location: YourCountry
+    posted_within: 7d
+    experience: [entry, associate]
+    work_type: [remote, hybrid, onsite]
+    pages: 3
+
+reject:
+  # Matched against the job title only.
+  title_terms:
+    - senior
+    - sr.
+    - lead
+    - principal
+    - staff
+    - head of
+    - director
+    - manager
+    - architect
+    - iii
+    - "iv"
+
+  # Matched against the description. Junior-hostile experience demands.
+  description_patterns:
+    - '\b([5-9]|1[0-9])\+?\s*(years|yrs|anos)\b'
+    - '\bminimum\s+of\s+([5-9]|1[0-9])\s*years\b'
+
+  # However many days in an office you would actually accept.
+  max_onsite_days: 3
+
+  # Postings demanding this many years, stated as a hard requirement, are out.
+  max_years: 5
+
+  # Human languages available. A posting requiring anything else is dropped.
+  languages_spoken: [English]
+
+  # Where daily travel is possible at all. Anywhere else, only a fully remote
+  # posting works — a hybrid role in Budapest is not a job you can take.
+  # LinkedIn's own remote filter is unreliable, so this is checked against what
+  # the posting says, not against the search that found it.
+  commutable_countries: [YourCountry]
+
+  # On-site roles in these places are not commutable. Remote and hybrid
+  # postings in the same city survive — only pure on-site is dropped.
+  onsite_cities:
+    - FarCity
+    - AnotherFarCity
+
+# ------------------------------------------------------------------- scoring
+# Soft score, 0-100. Weights are relative; they get normalised.
+scoring:
+  weights:
+    skills: 40        # overlap with master.yaml, tiered core > working > familiar
+    seniority: 20     # junior/graduate language in title and description
+    work_mode: 30     # remote > hybrid > on-site, adjusted for commute distance
+    freshness: 10     # newer postings rank higher
+
+  # Subtracted from the junior-boost when LinkedIn labels a posting
+  # "Mid-Senior level". Raise it to push those further down.
+  mid_senior_penalty: 8
+
+  # Added to the junior-boost when the model judges the role junior-suitable;
+  # subtracted at double weight when it judges it is not.
+  junior_suitable_bonus: 6
+
+  # Multiplier on the work-mode score when the posting states office days.
+  onsite_day_factor:
+    1: 1.0
+    2: 0.8
+    3: 0.4
+    4: 0.15
+    5: 0.1
+  skill_tier_points:
+    core: 3
+    working: 2
+    familiar: 1
+
+  # Positive signals in title or description.
+  boost_terms:
+    junior: 6
+    graduate: 6
+    "entry level": 6
+    trainee: 4
+    "recém-licenciado": 6
+    estágio: 3
+    "no experience required": 4
+
+  # Commute cost by city, 0.0 (impossible) to 1.0 (free). Applied to the
+  # work_mode component for hybrid and on-site roles. Anything unlisted
+  # defaults to `unknown_city`.
+  commute:
+    Remote: 1.0
+    YourTown: 1.0
+    NearbyCity: 0.8
+    CapitalCity: 0.6
+    FarCity: 0.15
+    unknown_city: 0.5   # somewhere at home we haven't listed
+    abroad: 0.1         # outside commutable_countries, not remote
+
+  # Multiplier on the work_mode component before commute is applied.
+  mode_weight:
+    remote: 1.0
+    hybrid: 0.8
+    onsite: 0.45
+    unknown: 0.6
+
+  # Jobs below this are still written to results.md, under a "borderline"
+  # heading, so a mis-tuned weight does not hide something quietly.
+  interesting_at: 50
+
+# ------------------------------------------------------------------- fetching
+fetch:
+  delay: 1.5          # seconds between requests; LinkedIn 429s aggressively
+  detail_delay: 0     # EXTRA pause on top of `delay`; 0 unless LinkedIn 429s
+  max_details: 120     # cap description fetches per run
+
+  # Re-run every saved search on a timer, in the background. 0 turns it off.
+  # New postings never rearrange the page you are reading — the jobs list
+  # offers a banner and you choose when to take the update.
+  auto_every_minutes: 0
+  timeout: 20
+  retries: 3
+
+# ----------------------------------------------------------------------- llm
+# A local Ollama model reads each description and extracts the facts the scorer
+# needs — work mode, office days, years required and whether they are actually
+# required, language requirements, pay. It never assigns the score itself.
+#
+# Setup:  install Ollama, then  ollama pull <model>
+# With no Ollama running the pass is skipped and scoring falls back to regex.
+llm:
+  enabled: true
+  # granite4.2:3b is 3x faster (6.0s a description against 17.7s, three at a
+  # time) but misses required languages in three of four non-English postings —
+  # it read no language requirement at all from a German posting demanding
+  # "sehr gute Deutschkenntnisse". That field hard-rejects, so a miss puts a job
+  # you cannot do in the list. The 8b got all four right, and also reads
+  # Fujitsu's "Location Flexibility: Primary Location Only" as on-site.
+  #
+  # The slow run you remember was a cold start over 40 postings. A routine run
+  # against a 7-day window only reads the handful that are new.
+  model: granite4.2:8b
+  host: http://localhost:11434
+  # The assistant on a job's page. Writing prose is harder than extracting
+  # facts, so a bigger model earns its keep here more than it does above.
+  # Leave blank to reuse `model`.
+  chat_model: granite4.2:8b
+  chat_ctx: 16384       # profile + posting + tailored.yaml + transcript
+  workers: 3            # descriptions read at once; ~1.6x faster than one by one
+  max_chars: 6000       # descriptions are truncated to this before sending
+  num_ctx: 8192
+  timeout: 180          # per description; CPU inference is slow

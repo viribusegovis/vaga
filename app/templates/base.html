@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Vaga{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2321405c'/><path d='M9 10l7 13 7-13' stroke='%23008cff' stroke-width='3.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+  /* ---------------------------------------------------------------- tokens */
+  :root {
+    --field:   #21405c;
+    --accent:  #008cff;
+    --bg:      #f2f5f8;
+    --card:    #ffffff;
+    --raised:  #f7f9fb;
+    --ink:     #16202b;
+    --muted:   #5d7288;
+    --faint:   #8fa3b6;
+    --line:    #e1e8ef;
+    --line-2:  #cdd8e3;
+    --good:    #12805c;
+    --warn:    #9a6700;
+    --bad:     #b42318;
+    --shadow:  0 1px 2px rgba(16,32,48,.06), 0 4px 12px rgba(16,32,48,.05);
+    --shadow-lg: 0 8px 30px rgba(16,32,48,.13);
+    --r:       12px;
+    --r-sm:    8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --field:   #0e1a26;
+      --accent:  #4aa8ff;
+      --bg:      #0b1119;
+      --card:    #141d28;
+      --raised:  #1b2734;
+      --ink:     #e8eef5;
+      --muted:   #93a6ba;
+      --faint:   #6b7e92;
+      --line:    #243244;
+      --line-2:  #32445a;
+      --good:    #3fbf92;
+      --warn:    #d9a441;
+      --bad:     #ef7b6f;
+      --shadow:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
+      --shadow-lg: 0 10px 34px rgba(0,0,0,.5);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+  h1, h2, h3 { line-height: 1.25; }
+
+  /* ---------------------------------------------------------------- header */
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--field); color: #fff;
+    box-shadow: 0 1px 0 rgba(255,255,255,.06), var(--shadow);
+  }
+  .top-in {
+    max-width: 1120px; margin: 0 auto; padding: 0 20px;
+    height: 58px; display: flex; align-items: center; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; }
+  .brand svg { display: block; }
+  .brand b { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
+  .brand span { font-size: 11px; color: #9fc0dd; margin-left: 1px; letter-spacing: .03em; }
+
+  .grow { flex: 1; }
+  .top nav { display: flex; gap: 2px; }
+  .top nav a {
+    color: #bcd4e8; text-decoration: none; font-size: 13.5px; font-weight: 500;
+    padding: 7px 12px; border-radius: 7px;
+  }
+  .top nav a:hover { background: rgba(255,255,255,.09); color: #fff; }
+  .top nav a.on { background: rgba(255,255,255,.15); color: #fff; }
+
+  /* ---------------------------------------------------------------- buttons */
+  .btn {
+    font: inherit; font-size: 13.5px; font-weight: 550;
+    border: 1px solid transparent; border-radius: var(--r-sm);
+    padding: 7px 13px; cursor: pointer; white-space: nowrap;
+    background: var(--accent); color: #fff; transition: filter .12s, background .12s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .5; cursor: default; filter: none; }
+  .btn-ghost {
+    background: transparent; color: var(--muted); border-color: var(--line-2);
+  }
+  .btn-ghost:hover { background: var(--raised); color: var(--ink); filter: none; }
+  .btn-head {
+    background: rgba(255,255,255,.13); color: #fff; border-color: transparent;
+  }
+  .btn-head:hover { background: rgba(255,255,255,.22); filter: none; }
+  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+
+  input[type=search], input[type=text], input[type=number], select, textarea {
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--card);
+    border: 1px solid var(--line-2); border-radius: var(--r-sm); padding: 7px 10px;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent;
+  }
+  .search-wrap { position: relative; display: flex; }
+  .search-wrap input {
+    background: rgba(255,255,255,.12); border-color: transparent; color: #fff;
+    width: 230px; padding-left: 32px;
+  }
+  .search-wrap input::placeholder { color: #a9c4dc; }
+  .search-wrap svg { position: absolute; left: 9px; top: 9px; opacity: .7; }
+
+  /* ---------------------------------------------------------------- layout */
+  main { max-width: 1120px; margin: 0 auto; padding: 20px; }
+  .muted { color: var(--muted); }
+  .faint { color: var(--faint); }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .pills { display: flex; gap: 4px; background: var(--card); padding: 4px;
+           border-radius: 10px; border: 1px solid var(--line); }
+  .pills a {
+    text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 550;
+    padding: 5px 11px; border-radius: 7px; display: flex; align-items: center; gap: 6px;
+  }
+  .pills a:hover { background: var(--raised); color: var(--ink); }
+  .pills a.on { background: var(--accent); color: #fff; }
+  .pills .n {
+    font-size: 11px; font-weight: 650; background: rgba(0,0,0,.07);
+    padding: 0 5px; border-radius: 20px; min-width: 17px; text-align: center;
+  }
+  .pills a.on .n { background: rgba(255,255,255,.25); }
+  @media (prefers-color-scheme: dark) { .pills .n { background: rgba(255,255,255,.1); } }
+
+  /* ---------------------------------------------------------------- cards */
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r); box-shadow: var(--shadow);
+  }
+  .job { margin-bottom: 12px; overflow: hidden; position: relative; }
+  .job::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--line-2);
+  }
+  .job.tier-hot::before { background: var(--accent); }
+  .job.tier-warm::before { background: #7fb8e6; }
+  .job.is-dismissed { opacity: .5; }
+  .job-head { display: flex; gap: 14px; padding: 15px 17px 0; }
+
+  .logo {
+    width: 46px; height: 46px; border-radius: 10px; flex: none;
+    object-fit: contain; background: #fff; border: 1px solid var(--line);
+    padding: 3px;
+  }
+  .logo-fb {
+    width: 46px; height: 46px; border-radius: 10px; flex: none;
+    display: grid; place-items: center; background: var(--raised);
+    border: 1px solid var(--line); color: var(--faint);
+    font-weight: 650; font-size: 17px;
+  }
+
+  .job h2 { margin: 0 0 2px; font-size: 16.5px; font-weight: 620; letter-spacing: -.01em; }
+  .job h2 a { color: inherit; text-decoration: none; }
+  .job h2 a:hover { color: var(--accent); }
+  .sub { font-size: 13.5px; color: var(--muted); }
+  .sub b { color: var(--ink); font-weight: 600; }
+  .dot { opacity: .45; margin: 0 5px; }
+
+  .score {
+    flex: none; margin-left: auto; text-align: center;
+    width: 46px; height: 46px; border-radius: 10px;
+    display: grid; place-items: center; font-weight: 700; font-size: 17px;
+    background: var(--raised); color: var(--muted); border: 1px solid var(--line);
+  }
+  .tier-hot  .score { background: var(--accent); color: #fff; border-color: transparent; }
+  .tier-warm .score { background: color-mix(in srgb, var(--accent) 16%, transparent);
+                      color: var(--accent); border-color: transparent; }
+
+  .summary { margin: 11px 17px 0; font-size: 14px; color: var(--ink); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 11px 17px 0; }
+  .chip {
+    font-size: 12px; font-weight: 550; padding: 3px 9px; border-radius: 20px;
+    background: var(--raised); color: var(--muted); border: 1px solid var(--line);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .chip.ok   { color: var(--good); border-color: color-mix(in srgb, var(--good) 35%, transparent); }
+  .chip.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+  .chip.bad  { color: var(--bad);  border-color: color-mix(in srgb, var(--bad) 35%, transparent); }
+  .chip.status-applied     { background: var(--accent); color: #fff; border-color: transparent; }
+  .chip.status-interested  { color: var(--accent); border-color: var(--accent); }
+  .chip.status-dismissed   { text-decoration: line-through; }
+
+  .job-foot {
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+    padding: 13px 17px; margin-top: 13px;
+    border-top: 1px solid var(--line); background: var(--raised);
+  }
+  .job-foot form { margin: 0; display: inline; }
+
+  details.disc { margin: 12px 17px 0; }
+  details.disc > summary {
+    cursor: pointer; font-size: 13px; font-weight: 550; color: var(--accent);
+    list-style: none; display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 0; user-select: none;
+  }
+  details.disc > summary::-webkit-details-marker { display: none; }
+  details.disc > summary::before {
+    content: "›"; display: inline-block; transition: transform .15s; font-size: 15px;
+  }
+  details.disc[open] > summary::before { transform: rotate(90deg); }
+
+  .why { margin: 8px 0 0; padding: 0 0 0 3px; list-style: none;
+         font-size: 13px; color: var(--muted); }
+  .why li { padding: 2px 0 2px 15px; position: relative; }
+  .why li::before {
+    content: ""; position: absolute; left: 3px; top: 11px;
+    width: 4px; height: 4px; border-radius: 50%; background: var(--line-2);
+  }
+
+  /* the posting's own markup, kept structured */
+  .desc {
+    margin-top: 10px; padding: 14px 16px; background: var(--raised);
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    font-size: 13.5px; line-height: 1.6; color: var(--ink);
+    max-height: 460px; overflow-y: auto;
+  }
+  .desc p { margin: 0 0 9px; }
+  .desc p:last-child { margin-bottom: 0; }
+  .desc ul, .desc ol { margin: 0 0 10px; padding-left: 20px; }
+  .desc li { margin-bottom: 4px; }
+  .desc strong, .desc b { color: var(--ink); font-weight: 650; }
+  .desc h1, .desc h2, .desc h3, .desc h4 {
+    font-size: 14px; margin: 14px 0 6px; font-weight: 650;
+  }
+
+  code, .mono {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px;
+    background: var(--bg); padding: 2px 6px; border-radius: 5px;
+    border: 1px solid var(--line); color: var(--muted);
+  }
+
+  .note-in {
+    flex: 1; min-width: 150px; font-size: 13px; padding: 5px 9px;
+    background: var(--card);
+  }
+
+  .empty { text-align: center; padding: 70px 20px; color: var(--muted); }
+  .empty h2 { font-size: 17px; margin: 0 0 6px; color: var(--ink); }
+
+  .banner {
+    padding: 11px 15px; border-radius: var(--r-sm); margin-bottom: 14px;
+    font-size: 13.5px; border: 1px solid;
+  }
+  .banner.info { background: color-mix(in srgb, var(--accent) 8%, var(--card));
+                 border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .banner.err  { background: color-mix(in srgb, var(--bad) 9%, var(--card));
+                 border-color: color-mix(in srgb, var(--bad) 32%, transparent); }
+  .banner.ok   { background: color-mix(in srgb, var(--good) 9%, var(--card));
+                 border-color: color-mix(in srgb, var(--good) 32%, transparent); }
+  .banner pre { margin: 7px 0 0; font-size: 11.5px; white-space: pre-wrap;
+                color: var(--muted); max-height: 170px; overflow: auto; }
+
+  .spin {
+    width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.35);
+    border-top-color: #fff; border-radius: 50%; display: inline-block;
+    animation: spin .7s linear infinite; vertical-align: -1px; margin-right: 5px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------------------------------------------------------------- settings */
+  .sec { margin-bottom: 18px; padding: 18px 20px; }
+  .sec > h2 {
+    margin: 0 0 3px; font-size: 15px; font-weight: 640; letter-spacing: -.01em;
+  }
+  .sec > .hint { margin: 0 0 16px; font-size: 13px; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 14px; padding: 9px 0;
+         border-top: 1px solid var(--line); }
+  .row:first-of-type { border-top: 0; }
+  .row label { flex: 1; font-size: 14px; }
+  .row label small { display: block; color: var(--muted); font-size: 12.5px;
+                     font-weight: 400; margin-top: 1px; }
+  .row input[type=number] { width: 90px; }
+  .row input[type=text] { width: 270px; }
+  .row output { font-variant-numeric: tabular-nums; font-weight: 650;
+                min-width: 34px; text-align: right; font-size: 13px; }
+  input[type=range] { accent-color: var(--accent); width: 190px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+           gap: 9px; }
+  .kv { display: flex; align-items: center; gap: 8px; }
+  .kv input[type=text] { flex: 1; width: auto; min-width: 0; }
+  .kv input[type=number] { width: 78px; }
+  textarea { width: 100%; resize: vertical; line-height: 1.5;
+             font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+             font-size: 12.5px; }
+  .actions-bar { display: flex; gap: 9px; align-items: center; margin-top: 15px; }
+
+  table.searches { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.searches th {
+    text-align: left; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--faint); font-weight: 600;
+    padding: 0 8px 7px 0; border-bottom: 1px solid var(--line);
+  }
+  table.searches td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line);
+                      vertical-align: middle; }
+  table.searches input[type=text] { width: 100%; }
+  table.searches input[type=number] { width: 58px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="/">
+      <svg width="27" height="27" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="rgba(255,255,255,.13)"/>
+        <path d="M9 10l7 13 7-13" stroke="#fff" stroke-width="3.4" fill="none"
+              stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>
+      </svg>
+      <b>Vaga<span>PT</span></b>
+    </a>
+
+    <form action="/" method="get" class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2">
+        <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/>
+      </svg>
+      <input type="search" name="q" value="{{ q|default('') }}"
+             placeholder="Search title, company, text…">
+    </form>
+
+    <span class="grow"></span>
+
+    <nav>
+      <a href="/" class="{{ 'on' if page == 'jobs' }}">Jobs</a>
+      <a href="/settings" class="{{ 'on' if page == 'settings' }}">Preferences</a>
+    </nav>
+
+    <form action="/search" method="post">
+      <button class="btn btn-head" {% if run.state == 'running' %}disabled{% endif %}>
+        {% if run.state == 'running' %}<span class="spin"></span>Fetching…{% else %}Fetch new{% endif %}
+      </button>
+    </form>
+
+    <button class="btn btn-head" id="quit" title="Stop the Vaga server">Quit</button>
+  </div>
+</header>
+
+<main>
+{% block body %}{% endblock %}
+</main>
+
+<script>
+document.getElementById('quit').addEventListener('click', async function () {
+  var b = this;
+  b.disabled = true; b.textContent = 'Stopping…';
+  try {
+    var r = await fetch('/shutdown', { method: 'POST' });
+    if (r.status === 409) {
+      var e = await r.json();
+      b.disabled = false; b.textContent = 'Quit';
+      alert(e.error);
+      return;
+    }
+    document.body.innerHTML =
+      '<p style="font:15px/1.6 system-ui;color:#5d7288;text-align:center;padding:80px 20px">' +
+      'Vaga has stopped. Close this tab.<br><br>' +
+      'Start it again by double-clicking <b>Vaga.cmd</b>.</p>';
+  } catch (err) {
+    // The server dying mid-request is the expected success path here.
+    document.body.innerHTML =
+      '<p style="font:15px/1.6 system-ui;color:#5d7288;text-align:center;padding:80px 20px">' +
+      'Vaga has stopped. Close this tab.</p>';
+  }
+});
+</script>
+
+{% if run.state == 'running' %}
+<script>
+  // The run happens in a worker thread; poll until it lands, then show results.
+  (function poll() {
+    setTimeout(function () {
+      fetch('/status').then(function (r) { return r.json(); }).then(function (s) {
+        if (s.state === 'running') { poll(); } else { location.reload(); }
+      }).catch(poll);
+    }, 2000);
+  })();
+</script>
+{% endif %}
+
+</body>
+</html>

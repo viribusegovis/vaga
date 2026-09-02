@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------- private data
+# None of this is committed, not even to a private repo. It is the difference
+# between a tool anyone could run and a file of someone's personal details.
+# (No trailing comments below: git treats the whole line as the pattern.)
+
+# name, phone, email, address, full work history
+cv/master.yaml
+# the above plus salary bands and a candid list of skill gaps
+cv/profile.md
+# CV photograph
+cv/assets/photo.png
+# where you live, what you would commute to, your saved searches
+searches.yaml
+
+# Real applications: cover-letter drafts naming real employers, plus the PDFs.
+# The _demo and baseline folders are templates and stay tracked.
+# _example and baseline hold real cover-letter prose, so they stay out too.
+# _demo is a fictional person; _template documents the knobs with no content.
+cv/applications/*/
+!cv/applications/_demo/
+!cv/applications/_template/
+*.pdf
+
+# ------------------------------------------------------------------ generated
+data/
+__pycache__/
+*.pyc

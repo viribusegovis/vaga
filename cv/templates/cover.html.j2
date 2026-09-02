@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>{{ profile.name }} — Cover Letter</title>
+<style>
+  /* Layout lifted from the Affinity original (Cover/*.pdf), in pt, recoloured
+     to the CV's navy and moved to A4 so the two documents match.
+     The original used Aptos, which isn't installed here; Rubik is the
+     substitute and also matches the CV. Swap --font to "Segoe UI" to sit
+     closer to the original's metrics. */
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #21405c;   /* same navy as the CV sidebar */
+    --band:   #32618c;   /* lifted from --bg by the original's bg/band ratio */
+    --fg:     #ffffff;
+    --muted:  #dce6f0;   /* neutral tint of --bg; the old #ebe6f2 read purple */
+    --accent: #008cff;   /* the CV's subtitle blue */
+    --font:   Rubik, "Segoe UI", Arial, sans-serif;
+  }
+
+  html, body { width: 595.92pt; height: 842.88pt; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    position: relative;
+  }
+
+  /* A4 is 16pt narrower than Letter: the band stays 108pt and right-aligned,
+     and the body keeps its 359pt measure, so only the right padding changes. */
+  .band { position: absolute; top: 0; left: 487.92pt; width: 108pt; height: 842.88pt; background: var(--band); }
+
+  .sheet { position: absolute; inset: 0; padding: 77pt 164.92pt 0 72pt; }
+
+  /* The header runs wider than the body column, out to the band edge —
+     Rubik is wider than the original's Aptos and would otherwise wrap. */
+  .head { width: 415.92pt; }
+  h1 { font-size: 50pt; font-weight: 700; line-height: 1.16; letter-spacing: -1pt; }
+  .role { font-size: 24pt; font-weight: 300; color: var(--accent); line-height: 1.22; margin-top: 1pt; }
+  .contact { font-size: 10pt; font-weight: 700; color: var(--muted); margin-top: 1pt; }
+
+  hr { border: 0; border-top: .8pt solid rgba(255,255,255,.45); width: 487.92pt; margin: 24.4pt 0 0 -72pt; }
+
+  .date, .salutation, .signoff, .signature { font-size: 14pt; line-height: 1.22; }
+  .date { margin-top: 25.4pt; }
+  .salutation { margin-top: 6pt; }
+  .greeting { font-size: 10pt; margin-top: 6.2pt; }
+  .body p { font-size: 10pt; line-height: 1.22; margin-top: 6pt; }
+  .signoff { margin-top: 6.4pt; }
+  .signature { margin-top: 6.9pt; }
+</style>
+
+<div class="band"></div>
+<div class="sheet">
+  <div class="head">
+    <h1>{{ cover.display_name or profile.name.split(" ")[0] ~ " " ~ profile.name.split(" ")[-1] }}</h1>
+    <div class="role">{{ cover.title }}</div>
+    <div class="contact">{{ profile.phone }} | {{ profile.email }} | {{ profile.location }}</div>
+  </div>
+  <hr>
+
+  <div class="date">{{ cover.date }}</div>
+  <div class="salutation">{{ cover.salutation }}</div>
+  <div class="greeting">{{ cover.greeting }}</div>
+
+  <div class="body">
+    {% for p in cover.body %}<p>{{ p }}</p>{% endfor %}
+  </div>
+
+  <div class="signoff">{{ cover.signoff }}</div>
+  <div class="signature">{{ profile.name | upper }}</div>
+</div>

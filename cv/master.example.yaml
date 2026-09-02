@@ -1,0 +1,72 @@
+# A skeleton of master.yaml with the shape but none of the content.
+#
+#   copy this to master.yaml and fill it in
+#
+# master.yaml is the superset: every bullet, project and skill you might ever
+# put on a CV. A tailored.yaml selects from it per application. It is not
+# tracked by git — it holds your name, contact details and full history.
+#
+# The skills pools are tiered. `core` and `working` are things you have built
+# with and feed the SKILLS block; `familiar` is what you have not used yet and
+# renders only when an application opts in, so it cannot claim depth you would
+# have to defend in an interview.
+
+profile:
+  name: Your Name
+  title: Junior Software Developer
+  phone: +00 000 000 000
+  email: you@example.com
+  location: Your Town, Country
+  github: https://github.com/you
+  linkedin: https://linkedin.com/in/you
+  photo: assets/avatar-placeholder.png
+about:
+- id: opener
+  text: Two or three sentences on what you build.
+- id: philosophy
+  text: What you care about in the work.
+languages:
+- name: English
+  level: Fluent
+  dots: 5
+skills:
+  core:
+  - Python
+  - SQL
+  working:
+  - Docker
+  - CI/CD
+  familiar:
+  - Kubernetes
+experience:
+- id: firstjob
+  role: Junior Developer
+  org: Company
+  location: City, Country
+  period: 2024 - present
+  bullets:
+  - What you built and what it did.
+  - A second thing, with the technology named.
+  tech:
+  - Python
+  - PostgreSQL
+education:
+- id: bsc
+  qualification: BSc Computer Science
+  org: University
+  period: 2020 - 2024
+projects:
+- id: sideproject
+  name: Project name
+  bullets:
+  - What it does and what you learned.
+  tech:
+  - Python
+  url: https://github.com/you/project
+cover:
+  title: JUNIOR SOFTWARE DEVELOPER
+  salutation: Dear Hiring Team,
+  greeting: ''
+  signoff: Kind regards,
+  paragraphs:
+  - Default cover text, overridden per application.
