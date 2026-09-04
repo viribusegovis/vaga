@@ -5,6 +5,11 @@ against your actual CV — then hands the good ones to the `cv/` half to tailor.
 
 *Vaga* is Portuguese for a job opening.
 
+![The jobs list](docs/screenshots/jobs-list.png)
+
+*Screenshots use the fictional data in `demo/` — see [Trying it
+out](#trying-it-out).*
+
 Double-click **`Vaga.cmd`**. It starts Ollama if it isn't up, starts the server,
 waits for the port, and opens the browser. Double-clicking it again just opens
 the tab. **`Vaga - Stop.cmd`** shuts it down, and so does the **Quit** button in
@@ -49,14 +54,37 @@ salary if stated, languages needed.
 - **Fetch new** runs a search in the background and refreshes when it lands.
   **Re-read descriptions** re-runs the model over what's already cached.
 
+![A job page](docs/screenshots/job-page.png)
+
 **Preferences** edits everything that used to mean opening a YAML file: saved
 searches, deal-breakers, scoring weights, the commute table, and which model
 reads descriptions. Your comments in `searches.yaml` survive — the forms rewrite
 individual values and data blocks, never the whole file. A raw YAML editor at
 the bottom covers anything the forms don't, and refuses to save invalid YAML.
 
+![Preferences](docs/screenshots/preferences.png)
+
 Scoring runs per request, so changing a weight and reloading re-ranks instantly:
 nothing is refetched from LinkedIn and the model is not re-run.
+
+## Trying it out
+
+```
+pip install -r requirements.txt
+python demo/run.py            http://localhost:8010
+```
+
+Sixteen invented postings from fictional companies, scored against a fictional
+CV. No LinkedIn, no Ollama, no setup — the whole app, with fake input. It is
+what the screenshots above are taken from.
+
+The demo copies the app into a temp directory and lays its own `master.yaml`,
+`searches.yaml` and `jobs.json` over the copy, so it cannot read or write your
+real files. Marking a job applied there changes a throwaway. It runs on port
+8010, so it can sit alongside the real thing on 8000.
+
+Nine postings survive the hard filters and seven don't — one per rule, so the
+rejected panel shows each filter actually firing rather than one example.
 
 ## Setting it up
 
@@ -108,6 +136,11 @@ cv/
   render.py           master + tailored -> HTML -> PDF
   templates/          A4 CV and cover letter
   applications/       one folder per job: tailored.yaml, then the PDFs
+
+demo/                 fictional data; `python demo/run.py` to try it
+  postings.py         the invented job postings
+  master.yaml         Alex Example's CV, the demo scores against
+  run.py              builds a throwaway sandbox and serves it
 
 data/                 generated, gitignored: jobs.json, logos, results.md
 ```
@@ -275,6 +308,10 @@ title, more office days than `max_onsite_days`, a hard requirement above
 isn't commutable, or a hybrid/on-site role outside `commutable_countries`. Hybrid and remote in those same cities survive — only on-site
 disqualifies. What got dropped, and why, is listed at the bottom of the jobs
 page so a filter quietly eating everything stays visible.
+
+![Hard filters](docs/screenshots/rejected.png)
+
+![Match breakdowns](docs/screenshots/scoring.png)
 
 **Score**, 0–100, from four weighted parts:
 

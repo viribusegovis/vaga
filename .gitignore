@@ -9,8 +9,10 @@ cv/master.yaml
 cv/profile.md
 # CV photograph
 cv/assets/photo.png
-# where you live, what you would commute to, your saved searches
-searches.yaml
+# where you live, what you would commute to, your saved searches.
+# Leading slash: an unanchored `searches.yaml` matches at every depth, which
+# also swallowed demo/searches.yaml and shipped a demo that could not start.
+/searches.yaml
 
 # Real applications: cover-letter drafts naming real employers, plus the PDFs.
 # The _demo and baseline folders are templates and stay tracked.

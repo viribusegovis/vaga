@@ -1,0 +1,97 @@
+# Alex Example's CV — the fictional person the demo runs as.
+#
+# Same shape as cv/master.example.yaml, filled in. Alex is the persona already
+# used by cv/applications/_demo, so the tailored CV in the demo matches the
+# person the jobs are being scored against.
+#
+# Nothing here is real. Employers are Microsoft's standard fictional
+# placeholders; dates, projects and numbers are invented.
+
+profile:
+  name: Alex Example
+  title: Junior Fullstack Developer
+  phone: "+351 900 000 000"
+  email: alex@example.com
+  location: Lisbon, Portugal
+  github: github.com/alexexample
+  linkedin: linkedin.com/in/alexexample
+  photo: assets/avatar-placeholder.png
+
+about:
+  - id: opener
+    text: >-
+      Software engineering graduate looking for a first full-time role on a
+      backend or platform team.
+  - id: philosophy
+    text: >-
+      I prefer boring, well-tested solutions over clever ones, and I'd rather
+      understand a system end to end than move fast through the parts I know.
+
+languages:
+  - {name: English, level: Native, dots: 5}
+  - {name: Portuguese, level: Professional, dots: 4}
+  - {name: Spanish, level: Professional, dots: 4}
+  - {name: German, level: Basic, dots: 2}
+
+# Tiered pools. A core hit is worth 3x a familiar one when scoring, so this is
+# the file that decides the ranking as much as the postings do.
+skills:
+  core:
+    - C#
+    - .NET
+    - ASP.NET Core
+    - TypeScript
+    - PostgreSQL
+    - REST APIs
+  working:
+    - React
+    - Angular
+    - Entity Framework Core
+    - Node.js
+    - Azure
+    - CI/CD
+    - GitHub Actions
+    - Unit Testing
+    - Git
+    - SQL
+  familiar:
+    - Docker
+    - Kubernetes
+    - AWS
+    - Terraform
+    - Redis
+    - GraphQL
+
+experience:
+  - id: northwind
+    role: (Part-time) Junior Backend Developer
+    org: Northwind Labs
+    location: Remote, Netherlands
+    period: 03/2024 - 11/2025
+    bullets:
+      - Built and maintained the reporting API behind the customer dashboard.
+      - Designed the Postgres schema and the aggregation queries it runs on.
+      - Cut the nightly export job from roughly 40 minutes to under 6.
+    tech: TypeScript, Node.js, PostgreSQL, REST APIs, Docker Compose
+
+  - id: contoso
+    role: Software Engineering Intern
+    org: Contoso
+    location: Lisbon, Portugal
+    period: 06/2023 - 12/2023
+    bullets:
+      - Replaced a spreadsheet-based scheduling process used by four teams.
+      - Wrote the integration tests that gated the team's deploy pipeline.
+    tech: C#, ASP.NET Core, Angular, Azure DevOps
+
+education:
+  - id: degree
+    course: BSc Software Engineering
+    org: University of Lisbon
+    period: 2020 - 2023
+
+projects:
+  - id: ledger
+    name: ledger-cli
+    text: A double-entry bookkeeping CLI, written to learn parser design.
+    tech: C#, .NET
