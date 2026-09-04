@@ -60,6 +60,13 @@ nothing is refetched from LinkedIn and the model is not re-run.
 
 ## Setting it up
 
+```
+pip install -r requirements.txt
+```
+
+Python 3.11 or newer. Chrome or Edge needs to be installed — `cv/render.py`
+drives one headless to print the PDFs. Ollama is optional; see below.
+
 Your CV content and your search preferences are **not** in this repo — they hold
 personal details, so they are gitignored. Copy the examples and fill them in:
 
@@ -80,6 +87,7 @@ into a tailored CV and cover letter. `app/tailor.py` is the seam between them.
 
 ```
 searches.yaml         every setting, hand-editable and commented
+requirements.txt      pip install -r this
 Vaga.cmd              double-click to start
 Vaga - Stop.cmd       double-click to stop
 
@@ -322,12 +330,28 @@ to spread the range.
 
 ## Handing a posting to the tailor step
 
-Each job shows the folder name to use. Create it under
-`cv/applications/`, write its `tailored.yaml`, then from the `cv/` half:
+**Create tailored application** on a job page writes
+`cv/applications/<slug>/tailored.yaml`, seeded from the posting: the skills it
+names that `master.yaml` already claims, the cleaned-up job title, and a cover
+skeleton with the argument left blank. It selects, it never invents — see
+`tailor.py`. Edit the YAML in the page, hit **Render**, and the CV and cover
+PDFs download from the same panel.
+
+Only that button creates a folder; nothing is seeded automatically. Most
+postings in a digest aren't worth applying to, and empty folders pile up fast.
+
+The `cv/` half also runs standalone, which is what the app shells out to:
 
 ```
-python render.py applications/2026-08-volkswagen-group-dig-junior-fullstack-developer
+python render.py applications/_demo
 ```
 
-Vaga deliberately doesn't create those folders — most postings in a digest
-aren't worth applying to, and empty folders pile up fast.
+## Licence
+
+Apache 2.0 — see [LICENSE](LICENSE).
+
+Vaga reads LinkedIn's public logged-out job fragments, which is against their
+Terms of Service to script. It is written for one person checking their own job
+search, and the delays and backoff in `fetch` are there to keep it that way.
+Don't point it at a loop, and don't build a dataset with it. Not affiliated with
+or endorsed by LinkedIn.

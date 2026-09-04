@@ -1,0 +1,18 @@
+# Vaga runs on Python 3.11+ (developed on 3.13). Install with:
+#   pip install -r requirements.txt
+#
+# Two dependencies are deliberately not on this list, because pip can't install
+# either one:
+#   Ollama    a separate binary, and optional. Without it the description-reading
+#             pass is skipped and scoring falls back to regex.
+#   Chrome or Edge   cv/render.py prints the CV and cover to PDF by driving a
+#             headless browser, rather than pulling in a PDF library that would
+#             render the CSS differently from what you preview.
+
+fastapi>=0.110          # the web app
+uvicorn>=0.27           # the server that runs it
+python-multipart>=0.0.9 # FastAPI needs this to read the HTML form posts
+jinja2>=3.1             # page templates, and the CV/cover templates
+httpx>=0.27             # LinkedIn fetches, logo fetches, Ollama calls
+lxml>=5.0               # parses the LinkedIn jobs-guest HTML fragments
+PyYAML>=6.0             # searches.yaml, master.yaml, tailored.yaml
