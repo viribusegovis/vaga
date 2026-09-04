@@ -239,7 +239,7 @@ POSTINGS = [
             summary="Lead a redesign of the order pipeline across distributed services."),
     ),
     dict(
-        days_ago=3, company="Blue Yonder Airlines", title="Fullstack Developer",
+        days_ago=3, company="Fourth Coffee", title="Fullstack Developer",
         location="Porto, Portugal", seniority="Entry level",
         employment_type="Full-time",
         html="""<p>Join our Porto office. This is an on-site role, five days a week,

@@ -214,14 +214,14 @@ is one — that's `granite4.2:8b`. Both are set in Preferences.
 Timings are three descriptions at a time; `llm.workers` controls that, and 3
 measured about 1.6x faster than one at a time.
 
-The 8B's extra point is `work_mode` on the Fujitsu posting, whose only signal is
+The 8B's extra point is `work_mode` on a posting whose only signal is
 "Location Flexibility: Primary Location Only" — no regex would catch that, and
 the 3B doesn't either. It drives a hard reject, so the miss puts one
 uncommutable job in the list. Set `model: granite4.2:8b` if you'd rather wait
 three times as long and catch it.
 
-Both list Portuguese among fully-tested languages, and both read the
-Portuguese-language ExpressGlass posting correctly as hybrid in Porto.
+Both list Portuguese among fully-tested languages, and both read the one
+Portuguese-language posting in the set correctly as hybrid in Porto.
 
 \* Two caveats on these numbers. The `gemma4` row is from the original 15-field
 key and wasn't re-run. And an earlier version of this table had the 8B at 14/15

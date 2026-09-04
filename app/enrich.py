@@ -222,9 +222,9 @@ def quoted_in(phrase, description):
 def check_evidence(facts_out, description):
     """Drop a work_mode the model could not actually quote the posting for.
 
-    Granite invented "based in our Porto office" for two Sovos postings whose
-    text says nothing of the sort, and claimed "onsite" for a third with no
-    quote at all. Both would have hard-rejected genuinely remote jobs on their
+    Granite invented "based in our Porto office" for two postings whose text
+    says nothing of the sort, and claimed "onsite" for a third with no quote
+    at all. Both would have hard-rejected genuinely remote jobs on their
     city. An unverifiable claim is downgraded to "unclear", which sends
     infer_mode to LinkedIn's own workplace filter instead.
     """

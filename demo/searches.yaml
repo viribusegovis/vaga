@@ -157,7 +157,7 @@ llm:
   # it read no language requirement at all from a German posting demanding
   # "sehr gute Deutschkenntnisse". That field hard-rejects, so a miss puts a job
   # you cannot do in the list. The 8b got all four right, and also reads
-  # Fujitsu's "Location Flexibility: Primary Location Only" as on-site.
+  # "Location Flexibility: Primary Location Only" as on-site.
   #
   # The slow run you remember was a cold start over 40 postings. A routine run
   # against a 7-day window only reads the handful that are new.

@@ -329,7 +329,7 @@ def infer_mode(job):
 
     The model's answer counts only when it can quote the posting for it: asked
     without evidence it will commit to "onsite" from silence, which is how a
-    remote Sovos role got rejected for being in Porto. Otherwise fall back to
+    genuinely remote role got rejected for the city its employer sits in. Otherwise fall back to
     the keyword scan, and finally to "unknown".
 
     There is deliberately no LinkedIn-workplace fallback here. The guest
