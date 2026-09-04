@@ -44,6 +44,7 @@ def pid_on_port(port):
 
 
 def kill(pid):
+    """Last-resort process kill, used only after a graceful /shutdown failed."""
     if sys.platform == "win32":
         subprocess.run(["taskkill", "/F", "/PID", str(pid)],
                        capture_output=True, check=False)
@@ -54,6 +55,11 @@ def kill(pid):
 
 
 def responding(url, path="/", timeout=1.5):
+    """Is something answering HTTP here? Any status counts, including 4xx.
+
+    This asks "is a server on this port", not "is it healthy" — a 404 from the
+    right process still means the port is taken and Vaga is up.
+    """
     try:
         httpx.get(url + path, timeout=timeout)
         return True
@@ -69,6 +75,11 @@ def windowless_python():
 
 
 def find_ollama():
+    """Ollama's install path, or None. Checked before PATH.
+
+    The Windows installer doesn't always put ollama on PATH for a non-login
+    shell, so the two known install locations are tried first.
+    """
     for candidate in [
         Path.home() / "AppData/Local/Programs/Ollama/ollama.exe",
         Path("C:/Program Files/Ollama/ollama.exe"),
@@ -99,6 +110,12 @@ def ensure_ollama():
 
 
 def start(open_browser=True):
+    """Bring Vaga up and open the tab. Safe to run when it's already running.
+
+    Double-clicking Vaga.cmd twice is expected, so a live server is not an
+    error — it just reopens the tab. Ollama is started first but never fatally:
+    Vaga works without it, just without the description-reading pass.
+    """
     if responding(URL, "/status"):
         print("Vaga is already running at " + URL)
         if open_browser:
@@ -127,6 +144,14 @@ def start(open_browser=True):
 
 
 def stop():
+    """Shut Vaga down, escalating only as far as it has to.
+
+    Three tiers: ask the app to close itself, then the recorded pid, then
+    whatever holds port 8000. The polite request comes first because the app
+    refuses it mid-search — those passes write jobs.json as they go, and killing
+    one mid-write is the only way to corrupt the cache. The fallbacks exist so
+    `stop` still works on a wedged worker, or a server someone started by hand.
+    """
     if not responding(URL, "/status"):
         PIDFILE.unlink(missing_ok=True)
         print("Vaga isn't running.")
@@ -169,6 +194,7 @@ def stop():
 
 
 def status():
+    """Print whether Vaga and Ollama are up. Exit code follows Vaga."""
     up = responding(URL, "/status")
     print("Vaga   : %s" % ("running at " + URL if up else "stopped"))
     print("Ollama : %s" % ("running" if responding(OLLAMA_URL, "/api/tags") else "stopped"))

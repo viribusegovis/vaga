@@ -179,6 +179,12 @@ class LinkedIn:
 
 
 def parse_cards(fragment):
+    """Pull job records out of one jobs-guest results fragment.
+
+    The endpoint returns bare <li> elements, not a document, so they get wrapped
+    before parsing. Every selector is best-effort: LinkedIn changes these class
+    names without notice, and a miss should cost one field, not the whole run.
+    """
     doc = html.fromstring("<ul>" + fragment + "</ul>")
     jobs = []
     for card in doc.xpath("//*[@data-entity-urn]"):
@@ -381,10 +387,27 @@ def locate(location, table, countries=()):
 
 
 def commute_factor(location, table, countries=()):
+    """How reachable a location is, 0-1, from the commute table in searches.yaml.
+
+    Thin wrapper over locate(), which also returns the matched key; scoring only
+    wants the number. See locate() for the left-to-right matching rule.
+    """
     return locate(location, table, countries)[0]
 
 
 def score(job, skills, cfg, countries=()):
+    """Rank one posting 0-100 against master.yaml. Returns (score, reasons).
+
+    Four weighted components, all normalised to 0-1 before weighting, except
+    seniority which is signed (-1 to 1) so a mid-senior posting actively loses
+    points instead of merely failing to gain them.
+
+    Deterministic and cheap: it runs per request, so changing a weight in
+    Preferences and reloading re-ranks instantly without refetching anything.
+    The LLM never scores — its extracted facts only override the regex guesses
+    here, which is what keeps a ranking reproducible and auditable. `reasons` is
+    what the "Why 72" panel shows.
+    """
     w = cfg["weights"]
     tier_points = cfg["skill_tier_points"]
     blob = fold("%s %s" % (job.get("title", ""), job.get("description", "")))

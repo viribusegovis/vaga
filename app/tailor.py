@@ -52,9 +52,10 @@ def clean_title(title):
 def matched_skills(job, skills):
     """Split master's pools by whether this posting actually mentions them.
 
-    Returns (claimed, familiar, missed) — the first two go on the CV, the third
-    is what the posting asked for that master.yaml has no claim to, listed as a
-    comment so the gaps are visible while writing the cover letter.
+    Returns (claimed, familiar). `claimed` is core + working skills the posting
+    names — the ones you can defend in an interview. `familiar` is the same test
+    against the familiar pool, kept separate because the CV template renders it
+    under its own dimmer heading rather than claiming depth you don't have.
     """
     blob = scout.fold("%s %s" % (job.get("title", ""), job.get("description", "")))
     hit = lambda name: bool(scout.term_re(name).search(blob))

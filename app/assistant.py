@@ -62,6 +62,18 @@ def profile_text():
 
 
 def posting_text(job):
+    """The posting as the model sees it: extracted facts, then the raw text.
+
+    The facts block carries the score and its reasons, so the assistant and the
+    jobs list can't disagree about what the posting says. Empty fields are
+    dropped rather than sent as null: the raw description follows immediately
+    below, so the model can still read what the extractor missed, and a wall of
+    nulls only invites it to comment on them.
+
+    Truncated at 7000 characters. Postings that long are boilerplate by the end
+    — benefits, equal-opportunity statements — and the prompt is already ~6k
+    tokens before the description is added.
+    """
     llm = job.get("llm") or {}
     facts = {
         "title": job.get("title"), "company": job.get("company"),
@@ -95,6 +107,17 @@ def whose():
 
 
 def system_prompt(job, slug):
+    """Assemble the grounding: rules, profile, posting, current application.
+
+    Order matters. The rules go first so they survive a long context, and the
+    tailored.yaml goes last because it's the thing most questions are about.
+
+    This is ~6k tokens and rebuilding it is cheap, but making the model *read*
+    it is not — hence the warm request the job page fires on open, which pushes
+    the prefix through once so Ollama can cache it. Keep the leading blocks
+    stable: changing them invalidates that cache and the next reply pays the
+    cold cost again.
+    """
     blocks = [RULES.format(name=whose()), "", profile_text(), "", posting_text(job)]
     current = tailor.read(slug)
     if current:
